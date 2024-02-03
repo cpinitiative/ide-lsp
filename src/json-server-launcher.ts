@@ -29,6 +29,7 @@ export function launch(socket: rpc.IWebSocket) {
     if (new Date().getTime() - lastDate.getTime() > 30000) {
       console.log('connection timed out!');
       serverConnection?.dispose();
+      socketConnection.dispose();
     }
   }, 10000)
   if (serverConnection) {
