@@ -20,21 +20,26 @@ export function launch(socket: rpc.IWebSocket) {
   writer.write({ jsonrpc: '2.0', method: 'start' } as rpc.NotificationMessage);
   let socketConnection: server.IConnection | undefined;
   let serverConnection: server.IConnection | undefined;
-  let pingId = setInterval(() => {
+  let disposed = false;
+  const pingId = setInterval(() => {
     if (new Date().getTime() - lastDate.getTime() > 30000) {
       console.log('connection timed out!');
-      serverConnection?.dispose();
-      socketConnection?.dispose();
-      clearInterval(pingId);
+      dispose();
     }
   }, 10000);
+  
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    console.log(`closed connection at ${new Date()} - ${--connections} connections`);
+    serverConnection?.dispose();
+    socketConnection?.dispose();
+    clearInterval(pingId);
+  }
+  
   // start the language server as an external process
-  socketConnection = server.createConnection(reader, writer, () => {
-      console.log(`closed connection at ${new Date()} - ${--connections} connections`);
-      socket.dispose();
-      clearInterval(pingId);
-    }
-  );
+  socketConnection = server.createConnection(reader, writer, socket.dispose);
+  socketConnection.onClose(dispose);
   serverConnection = server.createServerProcess("CPP", "clangd-12");
   reader.listen(message => {
     if (Message.isNotification(message) && message.method === 'ping') {
