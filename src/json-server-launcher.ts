@@ -68,7 +68,7 @@ export function launch(socket: rpc.IWebSocket) {
     clearInterval(pingId);
   });
 
-  serverConnection = server.createServerProcess('CPP', 'clangd-12');
+  serverConnection = server.createServerProcess('CPP', 'clangd');
   if (!serverConnection) return;
   forward(socketConnection, serverConnection, id, message => {
     if (Message.isNotification(message) && message.method === 'ping') {
